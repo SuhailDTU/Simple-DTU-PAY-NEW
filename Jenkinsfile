@@ -18,29 +18,18 @@ pipeline {
     stages {
         stage('Build') {
             steps {
-                echo 'Building service...'
                 dir(SERVICE_DIR) {
                     sh 'mvn package'
                 }
 
-                echo 'Building Docker image...'
                 sh "docker build -f ${DOCKERFILE} -t ${IMAGE_NAME}:${BUILD_NUMBER} ${SERVICE_DIR}"
-            }
-        }
-
-        stage('Debug info') {
-            steps {
-                sh 'docker ps -a || true'
-                sh 'netstat -tuln || true'
             }
         }
 
         stage('Test') {
             steps {
-                echo 'Starting container for testing...'
                 sh "docker run -d --name ${CONTAINER_NAME} -p ${TEST_PORT}:8080 ${IMAGE_NAME}:${BUILD_NUMBER}"
 
-                echo 'Waiting for service...'
                 timeout(time: 60, unit: 'SECONDS') {
                     waitUntil {
                         script {
@@ -69,10 +58,8 @@ pipeline {
 
         stage('Deploy') {
             steps {
-                echo 'Tagging image as latest...'
                 sh "docker tag ${IMAGE_NAME}:${BUILD_NUMBER} ${IMAGE_NAME}:latest"
 
-                echo 'Deploying container...'
                 sh "docker rm -f ${CONTAINER_NAME}-prod || true"
                 sh "docker run -d --name ${CONTAINER_NAME}-prod -p ${PROD_PORT}:8080 ${IMAGE_NAME}:latest"
             }
