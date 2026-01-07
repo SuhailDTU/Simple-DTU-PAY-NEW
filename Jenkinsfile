@@ -29,6 +29,12 @@ pipeline {
 
         stage('Test') {
             steps {
+                echo 'Cleaning up Docker networks...'
+                sh "docker network prune -f || true"
+
+                echo 'Waiting for port to be released...'
+                sh "sleep 2"
+
                 echo 'Starting container for testing...'
                 sh "docker run -d --name ${CONTAINER_NAME} -p ${PORT}:${PORT} ${IMAGE_NAME}:${BUILD_NUMBER}"
 
