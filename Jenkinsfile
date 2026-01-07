@@ -3,11 +3,12 @@ pipeline {
 
     environment {
         IMAGE_NAME = 'code-with-quarkus-jvm'
-        CONTAINER_NAME = "code-with-quarkus-test-${BUILD_NUMBER}"
+        CONTAINER_NAME = 'code-with-quarkus-test'
         SERVICE_DIR = 'service'
         CLIENT_DIR = 'client'
         DOCKERFILE = "${SERVICE_DIR}/src/main/docker/Dockerfile.jvm"
-        PORT = '8080'
+        TEST_PORT = '8080'
+        PROD_PORT = '80'
     }
 
     options {
@@ -27,23 +28,29 @@ pipeline {
             }
         }
 
+        stage('Debug info') {
+            steps {
+                sh 'docker ps -a || true'
+                sh 'netstat -tuln || true'
+            }
+        }
+
         stage('Test') {
             steps {
-                echo 'Cleaning up Docker networks...'
-                sh "docker network prune -f || true"
+                sh "docker rm -f ${CONTAINER_NAME} || true"
 
                 echo 'Waiting for port to be released...'
                 sh "sleep 2"
 
                 echo 'Starting container for testing...'
-                sh "docker run -d --name ${CONTAINER_NAME} -p ${PORT}:${PORT} ${IMAGE_NAME}:${BUILD_NUMBER}"
+                sh "docker run -d --name ${CONTAINER_NAME} -p ${TEST_PORT}:${TEST_PORT} ${IMAGE_NAME}:${BUILD_NUMBER}"
 
                 echo 'Waiting for service...'
                 timeout(time: 60, unit: 'SECONDS') {
                     waitUntil {
                         script {
                             def exitCode = sh(
-                                script: "curl --silent --fail http://localhost:${PORT}/q/health/ready",
+                                script: "curl --silent --fail http://localhost:${TEST_PORT}/q/health/ready",
                                 returnStatus: true
                             )
                             return exitCode == 0
@@ -72,7 +79,7 @@ pipeline {
 
                 echo 'Deploying container...'
                 sh "docker rm -f ${CONTAINER_NAME}-prod || true"
-                sh "docker run -d --name ${CONTAINER_NAME}-prod -p ${PORT}:${PORT} ${IMAGE_NAME}:latest"
+                sh "docker run -d --name ${CONTAINER_NAME}-prod -p ${PROD_PORT}:${PROD_PORT} ${IMAGE_NAME}:latest"
             }
         }
     }
