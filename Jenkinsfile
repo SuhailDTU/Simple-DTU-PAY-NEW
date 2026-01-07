@@ -10,6 +10,10 @@ pipeline {
         PORT = '8080'
     }
 
+    options {
+        ansiColor('xterm')
+    }
+
     stages {
         stage('Build') {
             steps {
