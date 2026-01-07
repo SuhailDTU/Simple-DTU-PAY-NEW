@@ -39,7 +39,7 @@ pipeline {
                             def exitCode = sh(
                                 script: "curl --silent --fail http://localhost:${PORT}/q/health/ready",
                                 returnStatus: true
-                            ).trim()
+                            )
                             return exitCode == 0
                         }
                     }
