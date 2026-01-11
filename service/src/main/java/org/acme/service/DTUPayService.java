@@ -2,7 +2,7 @@ package org.acme.service;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import org.acme.exceptions.UserNotFoundException;
-import org.acme.record.Costumer;
+import org.acme.record.Customer;
 import org.acme.record.Merchant;
 import org.acme.record.Payment;
 
@@ -16,27 +16,27 @@ import java.util.concurrent.ConcurrentHashMap;
 @ApplicationScoped
 public class DTUPayService {
 
-    private final ConcurrentHashMap<UUID, Costumer> costumers = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<UUID, Customer> customers = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<UUID, Merchant> merchants = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<UUID, Payment> payments = new ConcurrentHashMap<>();
 
-    public UUID registerCostumer(String name) {
+    public UUID registerCustomer(String name) {
         var id = UUID.randomUUID();
-        var costumer = new Costumer(name);
-        costumers.put(id, costumer);
+        var customer = new Customer(name);
+        customers.put(id, customer);
         return id;
     }
 
-    public void deleteCostumer(UUID id) {
-        if (!costumers.containsKey(id)) {
-            throw new UserNotFoundException("Costumer does not exist");
+    public void deleteCustomer(UUID id) {
+        if (!customers.containsKey(id)) {
+            throw new UserNotFoundException("Customer does not exist");
         }
-        costumers.remove(id);
+        customers.remove(id);
     }
 
-    public Optional<Costumer> getCostumerById(UUID id) {
-        var costumer = costumers.get(id);
-        return Optional.ofNullable(costumer);
+    public Optional<Customer> getCustomerById(UUID id) {
+        var customer = customers.get(id);
+        return Optional.ofNullable(customer);
     }
 
     public UUID registerMerchant(String name) {
@@ -58,16 +58,16 @@ public class DTUPayService {
         return Optional.ofNullable(merchant);
     }
 
-    public UUID createPayment(UUID costumerId, UUID merchantId, BigDecimal amount) {
+    public UUID createPayment(UUID customerId, UUID merchantId, BigDecimal amount) {
         UUID paymentId = UUID.randomUUID();
-        if (!costumers.containsKey(costumerId)) {
-            throw new UserNotFoundException("Costumer does not exist");
+        if (!customers.containsKey(customerId)) {
+            throw new UserNotFoundException("Customer does not exist");
         }
         if (!merchants.containsKey(merchantId)) {
             throw new UserNotFoundException("Merchant does not exist");
         }
 
-        var payment = new Payment(paymentId, costumerId, merchantId, amount, Instant.now());
+        var payment = new Payment(paymentId, customerId, merchantId, amount, Instant.now());
         payments.put(paymentId, payment);
         return paymentId;
     }

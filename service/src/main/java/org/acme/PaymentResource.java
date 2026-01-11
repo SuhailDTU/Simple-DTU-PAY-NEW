@@ -5,7 +5,7 @@ import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import org.acme.exceptions.UserNotFoundException;
-import org.acme.record.Costumer;
+import org.acme.record.Customer;
 import org.acme.record.Merchant;
 import org.acme.record.PaymentRequest;
 import org.acme.service.DTUPayService;
@@ -24,32 +24,32 @@ public class PaymentResource {
     }
 
     @POST
-    @Path("/costumers")
+    @Path("/customers")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.TEXT_PLAIN)
-    public String registerCostumer(Costumer costumer) {
-        var id = payService.registerCostumer(costumer.name());
+    public String registerCustomer(Customer customer) {
+        var id = payService.registerCustomer(customer.name());
         return id.toString();
     }
 
     @GET
-    @Path("/costumers/{id}")
+    @Path("/customers/{id}")
     @Produces(MediaType.APPLICATION_JSON)
-    public Costumer getCostumerById(@PathParam("id") String id) {
+    public Customer getCustomerById(@PathParam("id") String id) {
         try {
             var uuid = UUID.fromString(id);
-            return payService.getCostumerById(uuid).orElseThrow(() -> new NotFoundException("Costumer not found"));
+            return payService.getCustomerById(uuid).orElseThrow(() -> new NotFoundException("Customer not found"));
         } catch (IllegalArgumentException e) {
             throw new BadRequestException("Invalid UUID format");
         }
     }
 
     @DELETE
-    @Path("/costumers/{id}")
-    public void deleteCostumer(@PathParam("id") String id) {
+    @Path("/customers/{id}")
+    public void deleteCustomer(@PathParam("id") String id) {
         try {
             var uuid = UUID.fromString(id);
-            payService.deleteCostumer(uuid);
+            payService.deleteCustomer(uuid);
         } catch (IllegalArgumentException e) {
             throw new BadRequestException("Invalid UUID format");
         } catch (UserNotFoundException e) {
@@ -61,8 +61,8 @@ public class PaymentResource {
     @Path("/merchants")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.TEXT_PLAIN)
-    public String registerMerchant(Merchant costumer) {
-        var id = payService.registerMerchant(costumer.name());
+    public String registerMerchant(Merchant merchant) {
+        var id = payService.registerMerchant(merchant.name());
         return id.toString();
     }
 
@@ -98,7 +98,7 @@ public class PaymentResource {
     public String createPayment(PaymentRequest paymentRequest) {
         try {
             var paymentId = payService.createPayment(
-                    UUID.fromString(paymentRequest.costumerId()),
+                    UUID.fromString(paymentRequest.customerId()),
                     UUID.fromString(paymentRequest.merchantId()),
                     new BigDecimal(paymentRequest.amount())
             );

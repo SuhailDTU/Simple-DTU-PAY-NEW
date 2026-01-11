@@ -20,7 +20,7 @@ public class DTUPayService {
 
     public String register(Customer customer) {
         try (var client = ClientBuilder.newClient()) {
-            try (var response = client.target(baseUrl).path("pay/costumers").request().post(Entity.json(customer))) {
+            try (var response = client.target(baseUrl).path("pay/customers").request().post(Entity.json(customer))) {
                 return response.readEntity(String.class);
             }
         }
@@ -28,7 +28,7 @@ public class DTUPayService {
 
     public void unregisterCustomer(String customerId) {
         try (var client = ClientBuilder.newClient()) {
-            client.target(baseUrl).path("pay/costumers").path(customerId).request().delete();
+            client.target(baseUrl).path("pay/customers").path(customerId).request().delete();
         }
     }
 
