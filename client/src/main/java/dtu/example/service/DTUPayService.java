@@ -2,9 +2,13 @@ package dtu.example.service;
 
 import dtu.example.record.Customer;
 import dtu.example.record.Merchant;
+import dtu.example.record.Payment;
 import dtu.example.record.PaymentRequest;
 import jakarta.ws.rs.client.ClientBuilder;
 import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.core.GenericType;
+
+import java.util.Collection;
 
 public class DTUPayService {
 
@@ -32,9 +36,9 @@ public class DTUPayService {
         }
     }
 
-    public String register(Merchant customer) {
+    public String register(Merchant merchant) {
         try (var client = ClientBuilder.newClient()) {
-            try (var response = client.target(baseUrl).path("pay/merchants").request().post(Entity.json(customer))) {
+            try (var response = client.target(baseUrl).path("pay/merchants").request().post(Entity.json(merchant))) {
                 return response.readEntity(String.class);
             }
         }
@@ -50,9 +54,20 @@ public class DTUPayService {
         try (var client = ClientBuilder.newClient()) {
             var paymentRequest = new PaymentRequest(customerId, merchantId, amount);
             try (var response = client.target(baseUrl).path("pay/payments").request().post(Entity.json(paymentRequest))) {
-                return response.getStatus() == 200;
-            } catch (Exception ex) {
-                throw new RuntimeException("payment failed");
+                if (response.getStatus() != 200) {
+                    throw new RuntimeException(response.readEntity(String.class));
+                } else {
+                    return true;
+                }
+            }
+        }
+    }
+
+    public Collection<Payment> getAllPayments() {
+        try (var client = ClientBuilder.newClient()) {
+            try (var response = client.target(baseUrl).path("pay/payments").request().get()) {
+                return response.readEntity(new GenericType<>() {
+                });
             }
         }
     }

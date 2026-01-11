@@ -1,4 +1,6 @@
 package org.acme.record;
 
-public record Merchant(String name) {
+import java.util.UUID;
+
+public record Merchant(UUID id, String name) {
 }

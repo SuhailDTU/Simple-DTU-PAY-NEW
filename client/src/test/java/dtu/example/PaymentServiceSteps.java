@@ -11,6 +11,7 @@ import org.junit.After;
 import org.junit.Assert;
 
 import java.util.Collection;
+import java.util.UUID;
 
 public class PaymentServiceSteps {
     private Customer customer;
@@ -21,10 +22,11 @@ public class PaymentServiceSteps {
     private Collection<Payment> payments;
 
     private boolean successful = false;
+    private String errorMessage;
 
     @Given("a customer with name {string}")
     public void aCustomerWithName(String name) {
-        customer = new Customer(name);
+        customer = new Customer(name, UUID.randomUUID());
     }
 
     @Given("the customer is registered with Simple DTU Pay")
@@ -36,7 +38,7 @@ public class PaymentServiceSteps {
 
     @Given("a merchant with name {string}")
     public void aMerchantWithName(String name) {
-        merchant = new Merchant(name);
+        merchant = new Merchant(name, UUID.randomUUID());
     }
 
     @Given("the merchant is registered with Simple DTU Pay")
@@ -57,7 +59,68 @@ public class PaymentServiceSteps {
 
     @Then("the payment is successful")
     public void thePaymentIsSuccessful() {
-        Assert.assertTrue(successful);
+        Assert.assertTrue("Payment not successful", successful);
+    }
+
+    @Given("a customer with name {string}, who is registered with Simple DTU Pay")
+    public void aCustomerWithNameWhoIsRegisteredWithSimpleDTUPay(String name) {
+        customer = new Customer(name, UUID.randomUUID());
+        customerId = payService.register(customer);
+        Assert.assertNotNull(customerId);
+        Assert.assertNotEquals("", customerId);
+    }
+
+    @Given("a merchant with name {string}, who is registered with Simple DTU Pay")
+    public void aMerchantWithNameWhoIsRegisteredWithSimpleDTUPay(String name) {
+        merchant = new Merchant(name, UUID.randomUUID());
+        merchantId = payService.register(merchant);
+        Assert.assertNotNull(merchantId);
+        Assert.assertNotEquals("", merchantId);
+    }
+
+    @Given("a successful payment of {double} kr from the customer to the merchant")
+    public void aSuccessfulPaymentOfKrFromTheCustomerToTheMerchant(double amount) {
+        try {
+            successful = payService.pay(amount, customerId, merchantId);
+            Assert.assertTrue(successful);
+        } catch (Exception e) {
+            Assert.fail("Payment should have been successful");
+        }
+    }
+
+    @When("the manager asks for a list of payments")
+    public void theManagerAsksForAListOfPayments() {
+        payments = payService.getAllPayments();
+    }
+
+    @Then("the list contains a payments where customer {string} paid {double} kr to merchant {string}")
+    public void theListContainsAPaymentsWhereCustomerPaidKrToMerchant(String customerName, Double amount, String merchantName) {
+        boolean found = payments.stream().anyMatch(payment ->
+                payment.customer().name().equals(customerName) &&
+                        payment.merchant().name().equals(merchantName) &&
+                        payment.amount().doubleValue() == amount
+        );
+        Assert.assertTrue("Payment not found in the list", found);
+    }
+
+    @When("the merchant initiates a payment for {double} kr using customer id {string}")
+    public void theMerchantInitiatesAPaymentForKrUsingCustomerId(Double amount, String customerId) {
+        try {
+            successful = payService.pay(amount, customerId, merchantId);
+        } catch (Exception e) {
+            successful = false;
+            errorMessage = e.getMessage();
+        }
+    }
+
+    @Then("the payment is not successful")
+    public void thePaymentIsNotSuccessful() {
+        Assert.assertFalse("Payment was successful, but should not be", successful);
+    }
+
+    @Then("an error message is returned saying {string}")
+    public void anErrorMessageIsReturnedSaying(String message) {
+        Assert.assertEquals(message, errorMessage);
     }
 
     @After

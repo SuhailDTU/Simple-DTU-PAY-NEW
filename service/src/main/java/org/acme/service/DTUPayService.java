@@ -22,14 +22,14 @@ public class DTUPayService {
 
     public UUID registerCustomer(String name) {
         var id = UUID.randomUUID();
-        var customer = new Customer(name);
+        var customer = new Customer(id, name);
         customers.put(id, customer);
         return id;
     }
 
     public void deleteCustomer(UUID id) {
         if (!customers.containsKey(id)) {
-            throw new UserNotFoundException("Customer does not exist");
+            throw new UserNotFoundException(String.format("merchant with id \"%s\" is unknown", id));
         }
         customers.remove(id);
     }
@@ -41,14 +41,14 @@ public class DTUPayService {
 
     public UUID registerMerchant(String name) {
         var id = UUID.randomUUID();
-        var merchant = new Merchant(name);
+        var merchant = new Merchant(id, name);
         merchants.put(id, merchant);
         return id;
     }
 
     public void deleteMerchant(UUID id) {
         if (!merchants.containsKey(id)) {
-            throw new UserNotFoundException("Merchant does not exist");
+            throw new UserNotFoundException(String.format("merchant with id \"%s\" is unknown", id));
         }
         merchants.remove(id);
     }
@@ -60,14 +60,16 @@ public class DTUPayService {
 
     public UUID createPayment(UUID customerId, UUID merchantId, BigDecimal amount) {
         UUID paymentId = UUID.randomUUID();
-        if (!customers.containsKey(customerId)) {
-            throw new UserNotFoundException("Customer does not exist");
+        var customer = customers.get(customerId);
+        if (customer == null) {
+            throw new UserNotFoundException(String.format("customer with id \"%s\" is unknown", customerId));
         }
-        if (!merchants.containsKey(merchantId)) {
-            throw new UserNotFoundException("Merchant does not exist");
+        var merchant = merchants.get(merchantId);
+        if (merchant == null) {
+            throw new UserNotFoundException(String.format("merchant with id \"%s\" is unknown", merchantId));
         }
 
-        var payment = new Payment(paymentId, customerId, merchantId, amount, Instant.now());
+        var payment = new Payment(paymentId, customer, merchant, amount, Instant.now());
         payments.put(paymentId, payment);
         return paymentId;
     }

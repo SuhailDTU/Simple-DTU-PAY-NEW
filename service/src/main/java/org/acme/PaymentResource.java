@@ -4,6 +4,7 @@ package org.acme;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 import org.acme.exceptions.UserNotFoundException;
 import org.acme.record.Customer;
 import org.acme.record.Merchant;
@@ -95,18 +96,20 @@ public class PaymentResource {
     @Path("/payments")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public String createPayment(PaymentRequest paymentRequest) {
+    public Response createPayment(PaymentRequest paymentRequest) {
         try {
             var paymentId = payService.createPayment(
                     UUID.fromString(paymentRequest.customerId()),
                     UUID.fromString(paymentRequest.merchantId()),
                     new BigDecimal(paymentRequest.amount())
             );
-            return paymentId.toString();
+            return Response.ok().entity(paymentId.toString()).build();
         } catch (IllegalArgumentException e) {
-            throw new BadRequestException("Invalid UUID format");
+            return Response.status(Response.Status.BAD_REQUEST).entity("Invalid UUID format").build();
         } catch (UserNotFoundException e) {
-            throw new NotFoundException(e.getMessage());
+            return Response.status(Response.Status.NOT_FOUND).entity(e.getMessage()).build();
+        } catch (NullPointerException e) {
+            return Response.status(Response.Status.BAD_REQUEST).entity("Missing required fields").build();
         }
     }
 
